@@ -11,14 +11,14 @@ const robots = {
 
 async function start(){
   const content = robots.state.load();
-  //robots.input()
-  //await robots.amazon();
-  //await robots.text()
-  //await robots.images()
-  //robots.state.saveScript(content);
-  //await robots.video();
-  await robots.youtube();
-  process.exit();
+  robots.input()
+  await robots.amazon();
+  await robots.text()
+  //process.exit();
+  await robots.images()
+  robots.state.saveScript(content);
+  await robots.video();
+  //await robots.youtube();
   console.log("> End");
   process.exit();
 }

@@ -21,6 +21,7 @@ async function loadProductsFromAmazon(content){
 
 async function loadProductFromAPI(product){
   return new Promise((resolve,reject)=>{    
+    product.storeUrl = `https://www.amazon.com/dp/${product.id}`;
     var config = {
       method: 'get',
       url: `https://amazon23.p.rapidapi.com/product-details?asin=${product.id}&country=US`,

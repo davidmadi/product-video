@@ -19,14 +19,38 @@ const naturalLanguageUnderstanding = new NaturalLanguageUnderstandingV1({
 
 
 async function robot(){
-  const content = robots.state.load();
+  // //await fetchContentFromWikipedia(content);
+  // //sanitizeContent(content);
+  // //breakContentIntoSentences(content);
+  // //limitMaximumSentences(content);
 
-  //await fetchContentFromWikipedia(content);
-  //sanitizeContent(content);
-  //breakContentIntoSentences(content);
-  //limitMaximumSentences(content);
-  await fetchKeywordOfAllSentences(content);
+  const content = robots.state.load();
+  await fetchKeywordOfAllProducts(content);
+  setVideoParams(content);
+
   robots.state.save(content);
+
+  function setVideoParams(content){
+    content.videoTitle = `${content.searchTerm} on Amazon`
+    content.videoTags = content.searchTerm.split(' ');
+    content.videoDescription = content.products.map((p)=> 
+      p.templateStructure.name + "\n" + p.templateStructure.storeUrl ).join("\n\n");
+    var breakLine = "";
+    var tagCount = 0;
+    for(var product of content.products){
+      const eightFirst = product.templateStructure.keywords.slice(0, 8);
+      for(var keyword of eightFirst){
+        for(var splitted of keyword.split(' ')){
+          tagCount += splitted.length;
+          if (tagCount > 500) break;
+          content.videoTags.push(splitted);
+        }
+      }
+      //videoDescription += breakLine + product.templateStructure.name;
+      //breakLine = "\n\n";
+    }
+
+  }
 
   async function fetchContentFromWikipedia(content){
     const algorithmiaAuthenticated = algorithmia.client(algorithmiaCredentials.apiKey);
@@ -69,7 +93,7 @@ async function robot(){
     })
   }
 
-  async function fetchKeywordOfAllSentences(content){
+  async function fetchKeywordOfAllProducts(content){
     for(const product of content.products){
       if (product.amazonResponse.result.length > 0){
         const result = product.amazonResponse.result[0];

@@ -4,19 +4,26 @@ const robots = {
 }
 
 const contentFormat = {
+  maximumProducts: 5,
+  searchTerm: "Top 5 best headsets",
+  videoTags: [],
+  videoDescription: "",
+  videoTitle: "",
   products :[
     {
       url:"",
       amazonResponse:{},
       templateStructure:{
         name:"",
+        storeUrl:"",
         coverImage:"",
         variant1:"",
         variant2:"",
         variant3:"",
         firstDescription:"",
         keywords:[],
-        specifications:""
+        specifications:"",
+        images:[]
       }
     }
   ]
