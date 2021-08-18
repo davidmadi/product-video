@@ -1,0 +1,31 @@
+{
+  "name": "product-video",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/davidmadi/video-maker.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/davidmadi/video-maker/issues"
+  },
+  "homepage": "https://github.com/davidmadi/video-maker#readme",
+  "dependencies": {
+    "algorithmia": "^0.3.10",
+    "axios": "^0.21.1",
+    "express": "^4.17.1",
+    "gm": "^1.23.1",
+    "googleapis": "^82.0.0",
+    "ibm-watson": "^6.1.1",
+    "image-downloader": "^4.0.3",
+    "readline-sync": "^1.4.10",
+    "sbd": "^1.0.19",
+    "videoshow": "^0.1.12"
+  }
+}
