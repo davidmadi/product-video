@@ -12,7 +12,7 @@ async function robot(){
 
   //await downloadAllImages(content);
   await convertAllImages(content);
-  //await createAllSentenceImages(content);
+  await createAllSentenceImages(content);
 
   robots.state.save(content);
 }
@@ -114,13 +114,14 @@ async function convertImage(from, to){
 
 async function createAllSentenceImages(content){
   for(var i = 0; i < content.products.length; i++){
-    await createSentenceImage(i, content.products[i].text);
+    await createSentenceImage(i, content.products[i].templateStructure.name, `${i}-name.png` );
   }
 }
 
-async function createSentenceImage(sentenceIndex, text){
+async function createSentenceImage(productIndex, text, name){
   return new Promise((resolve,reject)=>{
-    const outputFile = `./content/${sentenceIndex}-sentence.png`;
+    console.log(`Creating image ${name}`);
+    const outputFile = `./content/${name}`;
     const templateSettings = {
       0:{
         size:'1920x400',
@@ -153,8 +154,8 @@ async function createSentenceImage(sentenceIndex, text){
     };
 
     gm()
-    .out('-size', templateSettings[sentenceIndex].size)
-    .out('-gravity', templateSettings[sentenceIndex].gravity)
+    .out('-size', templateSettings[productIndex].size)
+    .out('-gravity', templateSettings[productIndex].gravity)
     .out('-background', 'transparent')
     .out('-fill', 'white')
     .out('-kerning', '-1')
@@ -162,7 +163,6 @@ async function createSentenceImage(sentenceIndex, text){
     .write(outputFile, error =>{
       if (error) return reject(error);
 
-      console.log(`> Sentence created ${outputFile}`);
       resolve();
     })
   });

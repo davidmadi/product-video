@@ -10,13 +10,15 @@ const robots = {
 }
 
 async function start(){
+  const content = robots.state.load();
   //robots.input()
   //await robots.amazon();
+  //await robots.text()
   //await robots.images()
-  await robots.text()
-  process.exit();
+  //robots.state.saveScript(content);
   //await robots.video();
-  await  robots.youtube();
+  await robots.youtube();
+  process.exit();
   console.log("> End");
   process.exit();
 }

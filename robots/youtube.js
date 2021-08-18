@@ -159,12 +159,21 @@ async function robot() {
     console.log('> uploading /content/output.mov');
     const videoFilePath = './content/output.mov'
     const videoFileSize = fs.statSync(videoFilePath).size
-    const videoTitle = `${content.prefix} ${content.searchTerm}`
-    const videoTags = [content.searchTerm, ...content.sentences[0].keywords]
-    const videoDescription = content.sentences.map((sentence) => {
-      return sentence.text
-    }).join('\n\n')
-
+    const videoTitle = `${content.searchTerm}`
+    var videoTags = content.searchTerm.split(' ');
+    var videoDescription = content.searchTerm + " on Amazon";
+    var breakLine = "";
+    for(var product of content.products){
+      const eightFirst = product.templateStructure.keywords.slice(0, 3);
+      for(var keyword of eightFirst){
+        for(var splitted of keyword.split(' ')){
+          videoTags.push(splitted);
+        }
+      }
+      //videoDescription += breakLine + product.templateStructure.name;
+      //breakLine = "\n\n";
+    }
+    videoTags = videoTags.slice(0, 10);
     const requestParameters = {
       part: 'snippet, status',
       requestBody: {
