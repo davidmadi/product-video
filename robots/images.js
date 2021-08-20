@@ -9,10 +9,12 @@ const googleSearchCredentials = require('../credentials/google-search.json');
 
 async function robot(){
   const content = robots.state.load();
+  ////await downloadAllImages(content);
 
-  //await downloadAllImages(content);
   await convertAllImages(content);
   await createAllSentenceImages(content);
+  await createAllImportantFeatureImages(content);
+  await createAllExtraFeatureImages(content);
 
   robots.state.save(content);
 }
@@ -110,6 +112,18 @@ async function convertImage(from, to){
       resolve();
     })
   });
+}
+
+async function createAllImportantFeatureImages(content){
+  for(var i = 0; i < content.products.length; i++){
+    await createSentenceImage(i, content.products[i].templateStructure.importantFeatures.slice(0,3), `${i}-importantFeatures.png` );
+  }
+}
+
+async function createAllExtraFeatureImages(content){
+  for(var i = 0; i < content.products.length; i++){
+    await createSentenceImage(i, content.products[i].templateStructure.extraFeatures.slice(0,3), `${i}-extraFeatures.png` );
+  }
 }
 
 async function createAllSentenceImages(content){

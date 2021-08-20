@@ -2,10 +2,6 @@ const algorithmia = require("algorithmia");
 const sentenceBoundaryDetection = require("sbd");
 const algorithmiaCredentials = require("../credentials/algorithmia.json")
 const watsonCredentials = require('../credentials/watson.json');
-const robots = {
-  state : require('./state.js')
-}
-
 const NaturalLanguageUnderstandingV1 = require('ibm-watson/natural-language-understanding/v1');
 const { IamAuthenticator } = require('ibm-watson/auth');
 
@@ -16,19 +12,74 @@ const naturalLanguageUnderstanding = new NaturalLanguageUnderstandingV1({
   }),
   serviceUrl: watsonCredentials.url,
 });
-
+const robots = {
+  state : require('./state.js')
+}
 
 async function robot(){
-  // //await fetchContentFromWikipedia(content);
-  // //sanitizeContent(content);
-  // //breakContentIntoSentences(content);
-  // //limitMaximumSentences(content);
+  ////await fetchContentFromWikipedia(content);
+  ////sanitizeContent(content);
+  ////breakContentIntoSentences(content);
+  ////limitMaximumSentences(content);
 
   const content = robots.state.load();
   await fetchKeywordOfAllProducts(content);
   setVideoParams(content);
+  const unionKeywords = getSameKeyWords(content);
+  setImportantFeatures(unionKeywords, content);
+  //list same keywords of all products
+  //list feature bullets that contains merged keywords
+  //set important features in template structure
+  //image robot, create features image
 
   robots.state.save(content);
+
+  function setImportantFeatures(unionKeywords, content){
+    for(const product of content.products){
+      product.templateStructure.importantFeatures = [];
+      product.templateStructure.extraFeatures = [];
+      for(const bullet of product.amazonResponse.result[0].feature_bullets){
+        let foundInKeys = false;
+        for(var key of unionKeywords){
+          if (bullet.toLowerCase().indexOf(key) > -1){
+            product.templateStructure.importantFeatures.push(bullet);
+            foundInKeys = true;
+            break;
+          }
+        }
+        if (!foundInKeys){
+          product.templateStructure.extraFeatures.push(bullet);
+        }
+      }
+
+    }
+  }
+
+  function getSameKeyWords(content){
+    const sameKeyWords = [];
+    let firstProductKeywords = content.products[0].templateStructure.keywords;
+    for(var firstProductKey of firstProductKeywords){
+      for(var splitted of firstProductKey.split(' ')){
+        let foundInAll = true;
+        for(var i = 1; i < content.products.length; i++){
+          let foundInThisProduct = false;
+          for(var key of content.products[i].templateStructure.keywords){
+            if (key.toLowerCase().indexOf(splitted.toLowerCase()) > -1){
+              foundInThisProduct = true;
+              break;
+            }
+          }
+          if (!foundInThisProduct){
+            foundInAll = false;
+            break;
+          }
+        }
+        if (foundInAll)
+          sameKeyWords.push(splitted);
+      }
+    }
+    return sameKeyWords;
+  }
 
   function setVideoParams(content){
     content.videoTitle = `${content.searchTerm} on Amazon`
@@ -46,8 +97,6 @@ async function robot(){
           content.videoTags.push(splitted);
         }
       }
-      //videoDescription += breakLine + product.templateStructure.name;
-      //breakLine = "\n\n";
     }
 
   }

@@ -11,11 +11,11 @@ const robots = {
 
 async function start(){
   const content = robots.state.load();
-  robots.input()
-  await robots.amazon();
-  await robots.text()
-  //process.exit();
+  //robots.input();
+  //await robots.amazon();
+  //await robots.text()
   await robots.images()
+  process.exit();
   robots.state.saveScript(content);
   await robots.video();
   //await robots.youtube();
