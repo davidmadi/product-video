@@ -58,13 +58,13 @@ async function robot(){
 
   function getSameKeyWords(content){
     const sameKeyWords = [];
-    let firstProductKeywords = content.products[0].templateStructure.keywords;
+    let firstProductKeywords = content.products[0].templateStructure.featureKeywords;
     for(var firstProductKey of firstProductKeywords){
       for(var splitted of firstProductKey.split(' ')){
         let foundInAll = true;
         for(var i = 1; i < content.products.length; i++){
           let foundInThisProduct = false;
-          for(var key of content.products[i].templateStructure.keywords){
+          for(var key of content.products[i].templateStructure.featureKeywords){
             if (key.toLowerCase().indexOf(splitted.toLowerCase()) > -1){
               foundInThisProduct = true;
               break;
@@ -90,7 +90,7 @@ async function robot(){
     var breakLine = "";
     var tagCount = 0;
     for(var product of content.products){
-      const eightFirst = product.templateStructure.keywords.slice(0, 8);
+      const eightFirst = product.templateStructure.featureKeywords.slice(0, 8);
       for(var keyword of eightFirst){
         for(var splitted of keyword.split(' ')){
           tagCount += splitted.length;
@@ -102,63 +102,23 @@ async function robot(){
 
   }
 
-  async function fetchContentFromWikipedia(content){
-    const algorithmiaAuthenticated = algorithmia.client(algorithmiaCredentials.apiKey);
-    const wikipediaAlgorithm = algorithmiaAuthenticated.algo("web/WikipediaParser/0.1.2?timeout=300"); // timeout is optional
-    const input = `{ "search": ${content.searchTerm} "lang": "en" };`
-    let wikipediaResponse = await wikipediaAlgorithm.pipe(input);
-    let wikipediaContent = wikipediaResponse.get();
-    content.sourceContentOriginal = wikipediaContent.content;
-  }
-
-  function limitMaximumSentences(content){
-    content.sentences = content.sentences.slice(0, content.maximumSentences);
-  }
-
-  function sanitizeContent(content){
-    const cleanedLines = removeBlankLinesAndMarkDowns(content.sourceContentOriginal);
-    content.sourceContentSanitized = cleanedLines.join(' ');
-
-    function removeBlankLinesAndMarkDowns(text){
-      const allLines = text.split("\n");
-      const withoutBlankLines = allLines.filter((line)=>{
-        if (line.trim().length === 0 || line.trim().startsWith("=")){
-          return false;
-        }
-        return true;
-      })
-      return withoutBlankLines;
-    }
-  }
-
-  function breakContentIntoSentences(content){
-    content.sentences = [];
-    const sentences = sentenceBoundaryDetection.sentences(content.sourceContentSanitized);
-    sentences.forEach((sentence)=>{
-      content.sentences.push({
-        text: sentence,
-        keywords:[],
-        images:[]
-      })
-    })
-  }
-
   async function fetchKeywordOfAllProducts(content){
     for(const product of content.products){
       if (product.amazonResponse.result.length > 0){
         const result = product.amazonResponse.result[0];
         product.templateStructure.name = result.title;
         console.log("Finding keywords for product " + product.id)
-        product.templateStructure.keywords = await fetchNLASentenceKeyWords(result.title);
+        product.templateStructure.titleKeywords = await fetchNLASentenceKeyWords(result.title, 0.8);
+        product.templateStructure.featureKeywords = [];
         for(const feature of result.feature_bullets){
-          const keywords = await fetchNLASentenceKeyWords(feature);
-          product.templateStructure.keywords = product.templateStructure.keywords.concat(keywords);
+          const keywords = await fetchNLASentenceKeyWords(feature, 0.8);
+          product.templateStructure.featureKeywords = product.templateStructure.featureKeywords.concat(keywords);
         }
       }
     }
   }
 
-  function fetchNLASentenceKeyWords(sentence){
+  function fetchNLASentenceKeyWords(sentence, minimumRelevance){
     return new Promise(async (resolve, reject) =>{
       const analyzeParams = {
         'text': sentence,
@@ -172,7 +132,7 @@ async function robot(){
         const analysisResults = await naturalLanguageUnderstanding.analyze(analyzeParams);
         const filtered = [];
         analysisResults.result.keywords.forEach((k)=>{
-          if (k.relevance > 0.3)
+          if (k.relevance > minimumRelevance)
             return filtered.push(k.text);
         })
         resolve(filtered);
