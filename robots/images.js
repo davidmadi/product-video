@@ -8,6 +8,7 @@ const robots = {
 const googleSearchCredentials = require('../credentials/google-search.json');
 
 async function robot(){
+  console.log('> [images] Starting...')
   const content = robots.state.load();
   ////await downloadAllImages(content);
 

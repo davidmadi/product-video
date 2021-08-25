@@ -6,7 +6,9 @@ const robots = {
   input : require('./robots/input.js'),
   images : require('./robots/images.js'),
   video : require('./robots/video.js'),
-  youtube : require('./robots/youtube.js')
+  youtube : require('./robots/youtube.js'),
+  speech : require('./robots/speech.js'),
+  googleOAuth : require('./robots/googleOAuth.js'),
 }
 
 async function start(){
@@ -14,10 +16,12 @@ async function start(){
   //robots.input();
   //await robots.amazon();
   //await robots.text()
-  await robots.images()
-  process.exit();
-  robots.state.saveScript(content);
-  await robots.video();
+  await robots.googleOAuth();
+  await robots.speech();
+  //process.exit();
+  //await robots.images()
+  //robots.state.saveScript(content);
+  //await robots.video();
   //await robots.youtube();
   console.log("> End");
   process.exit();

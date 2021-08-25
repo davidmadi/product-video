@@ -9,23 +9,14 @@ async function robot() {
   console.log('> [youtube-robot] Starting...')
   const content = state.load()
 
-  await authenticateWithOAuth()
+  await refreshOAuthToken()
   const videoInformation = await uploadVideo(content)
   await uploadThumbnail(videoInformation)
 
-  async function authenticateWithOAuth() {
+  async function refreshOAuthToken() {
     let channelAuthorization = await loadCachedYoutubeAuthorization();
     const OAuthClient = await createOAuthClient();
-    if (!channelAuthorization){
-      const webServer = await startWebServer()
-      requestUserConsent(OAuthClient)
-      const authorizationToken = await waitForGoogleCallback(webServer);
-      channelAuthorization = await fetchRenewToken(authorizationToken);
-      await writeAuthFile(channelAuthorization);
-      await stopWebServer(webServer)
-    }
     await fetchNewFreshToken(OAuthClient, channelAuthorization);
-    //await requestGoogleForAccessTokens(OAuthClient, authorizationToken)
     await requestGoogleForAccess(OAuthClient);
     await setGlobalGoogleAuthentication(OAuthClient)
 
@@ -38,15 +29,6 @@ async function robot() {
         OAuthClient.credentials.refresh_token = channelAuthorization.refresh_token;  
         const authorizationToken = await OAuthClient.getRequestHeaders();
         resolve(authorizationToken);
-      });
-    }
-
-    function fetchRenewToken(authorizationToken){
-      return new Promise(async (resolve,reject)=>{
-        const access = await OAuthClient.getToken(authorizationToken);//get access token
-        if (access && access.tokens && access.tokens.refresh_token)
-          return resolve(access.tokens);
-        reject("Usuario nao permitiu acesso ao canal do youtube.")
       });
     }
 
@@ -63,32 +45,6 @@ async function robot() {
       });
     }
 
-    function writeAuthFile(authorizationResult){
-      return new Promise((resolve,reject)=>{
-        const jsonAuth = JSON.stringify(authorizationResult);
-        fs.writeFile('./credentials/youtube-authorization.json', jsonAuth, function (err) {
-          if (err) return reject(console.log(err));
-          resolve();
-        });
-      });
-    }
-
-    async function startWebServer() {
-      return new Promise((resolve, reject) => {
-        const port = 5000
-        const app = express()
-
-        const server = app.listen(port, () => {
-          console.log(`> [youtube-robot] Listening on http://localhost:${port}`)
-
-          resolve({
-            app,
-            server
-          })
-        })
-      })
-    }
-
     async function createOAuthClient() {
       const credentials = require('../credentials/google-youtube.json')
       const OAuthClient = new OAuth2(
@@ -99,58 +55,9 @@ async function robot() {
       return OAuthClient
     }
 
-    //{"authorizationToken":"4/0AX4XfWgpPdSkcYA9nj7Dz25MEMU4txNYFZ2XEYt5z4z_yld8ABmIhph7db8Rpwc_nmrYNw"}
-    //{"authorizationToken":"4/0AX4XfWhzAiIyWJQuDfrkNqgxxaPMO3LaLVE2Vj5KqZAgG0tBOr-_wRaSjiGVIFxiOhj4Jg"}
-
-    function requestUserConsent(OAuthClient) {
-      const consentUrl = OAuthClient.generateAuthUrl({
-        access_type: 'offline',
-        scope: ['https://www.googleapis.com/auth/youtube']
-      })
-
-      console.log(`> [youtube-robot] Please give your consent: ${consentUrl}`)
-    }
-
-    async function waitForGoogleCallback(webServer) {
-      return new Promise((resolve, reject) => {
-        console.log('> [youtube-robot] Waiting for user consent...')
-
-        webServer.app.get('/oauth2callback', (req, res) => {
-          const authCode = req.query.code
-          console.log(`> [youtube-robot] Consent given: ${authCode}`)
-
-          res.send('<h1>Thank you!</h1><p>Now close this tab.</p>')
-          resolve(authCode)
-        })
-      })
-    }
-
-    async function requestGoogleForAccessTokens(OAuthClient, authorizationToken) {
-      return new Promise((resolve, reject) => {
-        OAuthClient.getToken(authorizationToken, (error, tokens) => {
-          if (error) {
-            return reject(error)
-          }
-
-          console.log('> [youtube-robot] Access tokens received!')
-
-          OAuthClient.setCredentials(tokens)
-          resolve()
-        })
-      })
-    }
-
     function setGlobalGoogleAuthentication(OAuthClient) {
       google.options({
         auth: OAuthClient
-      })
-    }
-
-    async function stopWebServer(webServer) {
-      return new Promise((resolve, reject) => {
-        webServer.server.close(() => {
-          resolve()
-        })
       })
     }
   }
@@ -207,8 +114,6 @@ async function robot() {
     const youtubeResponse = youtube.thumbnails.set(requestParameters)
     console.log(`> [youtube-robot] Thumbnail uploaded!`)
   }
-
-
 }
 
 module.exports = robot

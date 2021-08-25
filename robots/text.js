@@ -17,6 +17,7 @@ const robots = {
 }
 
 async function robot(){
+  console.log('> [text] Starting...')
   ////await fetchContentFromWikipedia(content);
   ////sanitizeContent(content);
   ////breakContentIntoSentences(content);

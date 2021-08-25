@@ -5,6 +5,7 @@ const rootPath = path.resolve(__dirname, '..');
 const state = require("./state.js");
 
 async function robot(){
+  console.log('> [video render] Starting...')
   const content = state.load();
   await createYoutubeThumbnail();
   await createAfterEffectsScript(content);
