@@ -15,13 +15,13 @@ async function start(){
   const content = robots.state.load();
   //robots.input();
   //await robots.amazon();
-  await robots.text()
+  //await robots.text()
   //await robots.googleOAuth();
   //await robots.speech();
   //process.exit();
   //await robots.images()
   //robots.state.saveScript(content);
-  //await robots.video();
+  await robots.video();
   //await robots.youtube();
   console.log("> End");
   process.exit();

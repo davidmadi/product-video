@@ -24,8 +24,9 @@ async function robot(){
   ////limitMaximumSentences(content);
 
   const content = robots.state.load();
-  await fetchKeywordOfAllProducts(content);
+  //await fetchKeywordOfAllProducts(content);
   setVideoParams(content);
+  setProductName(content);
   const unionKeywords = getSameKeyWords(content);
   setImportantFeatures(unionKeywords, content);
   //list same keywords of all products
@@ -61,25 +62,33 @@ async function robot(){
     let firstProductKeywords = content.products[0].templateStructure.featureKeywords;
     for(var firstProductKey of firstProductKeywords){
       for(var splitted of firstProductKey.split(' ')){
-        let foundInAll = true;
+        let foundInAnyOtherProduct = false;
         for(var i = 1; i < content.products.length; i++){
-          let foundInThisProduct = false;
           for(var key of content.products[i].templateStructure.featureKeywords){
             if (key.toLowerCase().indexOf(splitted.toLowerCase()) > -1){
-              foundInThisProduct = true;
+              foundInAnyOtherProduct = true;
               break;
             }
           }
-          if (!foundInThisProduct){
-            foundInAll = false;
+          if (foundInAnyOtherProduct){
             break;
           }
         }
-        if (foundInAll)
+        if (foundInAnyOtherProduct)
           sameKeyWords.push(splitted);
       }
     }
     return sameKeyWords;
+  }
+
+  function setProductName(content){
+    for(var product of content.products){
+      product.templateStructure.firstDescription = product.amazonResponse.result[0].title;
+      product.templateStructure.name = product.amazonResponse.result[0].title.split('-')[0];
+      product.templateStructure.name = product.templateStructure.name.split(',')[0].trim();
+      product.templateStructure.name = product.templateStructure.name.split('with')[0].trim();
+      product.templateStructure.name = product.templateStructure.name.split('and')[0].trim();
+    }
   }
 
   function setVideoParams(content){
@@ -106,7 +115,6 @@ async function robot(){
     for(const product of content.products){
       if (product.amazonResponse.result.length > 0){
         const result = product.amazonResponse.result[0];
-        product.templateStructure.name = result.title;
         console.log("Finding keywords for product " + product.id)
         product.templateStructure.titleKeywords = await fetchNLASentenceKeyWords(result.title, 0.8);
         product.templateStructure.featureKeywords = [];

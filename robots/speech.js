@@ -13,12 +13,10 @@ async function robot() {
   console.log('> [text to speech] Starting...')
   const content = state.load();
 
-  //await createProductSpeechAudio();
-  //convertDescriptionToSpeech(content);
+  convertDescriptionToSpeech(content);
   let channelAuthorization = await loadCachedYoutubeAuthorization();
   OAuthClient = await createOAuthClient();
-  await fetchNewFreshToken(OAuthClient, channelAuthorization);
-  
+  await fetchNewFreshToken(OAuthClient, channelAuthorization);  
   await createAllSpeechAudio(content);
 
   state.save(content);
@@ -33,7 +31,7 @@ async function createProductSpeechAudio(product, index){
     const text = product.templateStructure.featureSpeech;
     const data = {
       "audioConfig": {
-        "audioEncoding": "LINEAR16",
+        "audioEncoding": "MP3",
         "effectsProfileId": [
           "headphone-class-device"
         ],
@@ -49,7 +47,6 @@ async function createProductSpeechAudio(product, index){
       }
     };
 
-
     var config = {
       method: 'post',
       url: 'https://texttospeech.googleapis.com/v1/text:synthesize',
@@ -62,18 +59,18 @@ async function createProductSpeechAudio(product, index){
 
     axios(config)
     .then( (response)=> {
-      fs.writeFile(`./content/${index}-featureSpeech.mp3`, response.data.audioContent, 'base64', (err) => {
-        resolve();
-      });
+      fs.writeFile(`./content/${index}-featureSpeech.mp3`, response.data.audioContent, 'base64',
+        (err) => {
+          resolve();
+        });
     })
     .catch( (error)=> {
-      console.log(error);
+      //console.log(error);
       reject(error);
     });
     //const writeFile = util.promisify(fs.writeFile);
     //await writeFile('./content/0-speech.mp3', response.audioContent, 'binary');
   });
-
 }
 
 async function createAllSpeechAudio(content){
@@ -84,22 +81,40 @@ async function createAllSpeechAudio(content){
 }
 
 function convertDescriptionToSpeech(content){
-  let junctionIndex = 0;
-  let junction = "";
+  //50 words = 20sec
   for(var product of content.products){
-    let wholeSpeech = "";
-    let speech = product.templateStructure.extraFeatures;
-    if (!speech.length) speech = product.templateStructure.importantFeatures;
-    for(var feature of speech){
-      wholeSpeech += " " + junction + " " + feature;
-      junction = junctions[junctionIndex++];
-      if (junctionIndex > junctions.length-1){
-         junctionIndex = 0;
-         junction = junctions[junctionIndex++];
-        }
-    }
+    let wholeSpeech ="";
+    let junction = "";
+    let junctionIndex = 0;
+    let extract = extractWholeSpeech(wholeSpeech, junction, junctionIndex, product.templateStructure.extraFeatures);
+    wholeSpeech = extract.wholeSpeech;
+    junction = extract.junction;
+    junctionIndex = extract.junctionIndex;
+    extract = extractWholeSpeech(wholeSpeech, junction, junctionIndex, product.templateStructure.importantFeatures);
+    wholeSpeech = extract.wholeSpeech;
+    junction = extract.junction;
+    junctionIndex = extract.junctionIndex;
     product.templateStructure.featureSpeech = wholeSpeech.trim();
   }
+}
+
+function extractWholeSpeech(wholeSpeech, junction, junctionIndex, featureList){
+  for(var feature of featureList){
+    let wsLenght = wholeSpeech.split(' ').length;
+    if(wsLenght >= 60)
+      break;
+
+    if (feature.split(' ').length + wsLenght > 60)
+      continue;
+
+    wholeSpeech += " " + junction + " " + feature;
+    junction = junctions[junctionIndex++];
+    if (junctionIndex > junctions.length-1){
+      junctionIndex = 0;
+      junction = junctions[junctionIndex++];
+    }
+  }
+  return {wholeSpeech, junction, junctionIndex};
 }
 
 async function createOAuthClient() {

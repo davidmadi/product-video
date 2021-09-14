@@ -10,14 +10,16 @@ const googleSearchCredentials = require('../credentials/google-search.json');
 async function robot(){
   console.log('> [images] Starting...')
   const content = robots.state.load();
-  ////await downloadAllImages(content);
+  //await downloadAllImages(content);
 
   await convertAllImages(content);
-  await createAllSentenceImages(content);
+  await createAllDescriptionImages(content);
   await createAllImportantFeatureImages(content);
   await createAllExtraFeatureImages(content);
+  await createAllNameImages(content);
 
   robots.state.save(content);
+  robots.state.saveScript(content);
 }
 
 async function downloadAllImages(content){
@@ -25,18 +27,20 @@ async function downloadAllImages(content){
   //preventDuplicatedImages[content.products[1].images[0]] = true;
   for (var i = 0; i < content.products.length; i++){
     let product = content.products[i];
+    let qtyImages = 0;
     product.templateStructure.images = [];
     const mainUrl = product.amazonResponse.result[0].main_image;
     await downloadAndSave(mainUrl, `${i}-original.png`);
     product.templateStructure.images.push(`${i}-original.png`);
     
     if (product.amazonResponse.result[0].variants.length > 0){
-      for(var v = 0; v < product.amazonResponse.result[0].variants.length; v++){
+      for(var v = 0; v < product.amazonResponse.result[0].variants.length && qtyImages < 3; v++){
         try{
           const variant = product.amazonResponse.result[0].variants[v];
           if (variant.images && variant.images.length > 0){
-            await downloadAndSave(variant.images[0].large, `${i}-variant-${v}-original.png`);
-            product.templateStructure.images.push(`${i}-variant-${v}-original.png`);
+            await downloadAndSave(variant.images[0].large, `${i}-variant-${qtyImages}-original.png`);
+            product.templateStructure.images.push(`${i}-variant-${qtyImages}-original.png`);
+            qtyImages++;
           }
         }
         catch(error){
@@ -44,11 +48,12 @@ async function downloadAllImages(content){
         }
       }
     }
-    else if (product.amazonResponse.result[0].images.length > 0){
-      for(var v = 0; v < product.amazonResponse.result[0].images.length; v++){
+    if (product.amazonResponse.result[0].images.length > 0){
+      for(var v = 0; v < product.amazonResponse.result[0].images.length && qtyImages < 3; v++){
         try{
-          await downloadAndSave(product.amazonResponse.result[0].images[v], `${i}-variant-${v}-original.png`);
-          product.templateStructure.images.push(`${i}-variant-${v}-original.png`);
+          await downloadAndSave(product.amazonResponse.result[0].images[v], `${i}-variant-${qtyImages}-original.png`);
+          product.templateStructure.images.push(`${i}-variant-${qtyImages}-original.png`);
+          qtyImages++;
         }
         catch(error){
           console.log(`Error downloading image: ${imageUrl} | ${error}`);
@@ -117,65 +122,45 @@ async function convertImage(from, to){
 
 async function createAllImportantFeatureImages(content){
   for(var i = 0; i < content.products.length; i++){
-    await createSentenceImage(i, content.products[i].templateStructure.importantFeatures.slice(0,3), `${i}-importantFeatures.png` );
+    await createSentenceImage(content.products[i].templateStructure.importantFeatures.slice(0,3), `${i}-importantFeatures.png` , 'center' ,'1920x1080');
   }
 }
 
 async function createAllExtraFeatureImages(content){
   for(var i = 0; i < content.products.length; i++){
-    await createSentenceImage(i, content.products[i].templateStructure.extraFeatures.slice(0,3), `${i}-extraFeatures.png` );
+    await createSentenceImage(content.products[i].templateStructure.extraFeatures.slice(0,3), `${i}-extraFeatures.png`, 'center' ,'1920x1080');
   }
 }
 
-async function createAllSentenceImages(content){
+async function createAllDescriptionImages(content){
   for(var i = 0; i < content.products.length; i++){
-    await createSentenceImage(i, content.products[i].templateStructure.name, `${i}-name.png` );
+    await createSentenceImage(content.products[i].templateStructure.firstDescription, `${i}-description.png`, 'center' ,'1920x1080');
   }
 }
 
-async function createSentenceImage(productIndex, text, name){
+async function createAllNameImages(content){
+  for(var i = 0; i < content.products.length; i++){
+    await createSentenceImage(content.products[i].templateStructure.name, `${i}-name.png`, 'northeast', '1920x1080');
+  }
+}
+
+async function createSentenceImage(text, name, gravity, size, pointSize){
   return new Promise((resolve,reject)=>{
     console.log(`Creating image ${name}`);
     const outputFile = `./content/${name}`;
-    const templateSettings = {
-      0:{
-        size:'1920x400',
-        gravity:'center'
-      },
-      1:{
-        size:'1920x1080',
-        gravity:'center'
-      },
-      2:{
-        size:'800x1080',
-        gravity:'center'
-      },
-      3:{
-        size:'1920x400',
-        gravity:'center'
-      },
-      4:{
-        size:'1920x1080',
-        gravity:'center'
-      },
-      5:{
-        size:'800x1080',
-        gravity:'center'
-      },
-      6:{
-        size:'1920x400',
-        gravity:'center'
-      },
-    };
+    
 
-    gm()
-    .out('-size', templateSettings[productIndex].size)
-    .out('-gravity', templateSettings[productIndex].gravity)
+    let gmFile = gm()
+    .out('-size', size)//half '800x1080'
+    .out('-gravity', gravity)
     .out('-background', 'transparent')
     .out('-fill', 'white')
     .out('-kerning', '-1')
-    .out(`caption:${text}`)
-    .write(outputFile, error =>{
+    .out(`caption:${text}`);
+
+    gmFile = gmFile.out('-pointsize', 'X11');
+
+    gmFile.write(outputFile, error =>{
       if (error) return reject(error);
 
       resolve();
