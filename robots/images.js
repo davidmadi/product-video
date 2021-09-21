@@ -10,7 +10,7 @@ const googleSearchCredentials = require('../credentials/google-search.json');
 async function robot(){
   console.log('> [images] Starting...')
   const content = robots.state.load();
-  //await downloadAllImages(content);
+  await downloadAllImages(content);
 
   await convertAllImages(content);
   await createAllDescriptionImages(content);
@@ -35,10 +35,13 @@ async function downloadAllImages(content){
     
     if (product.amazonResponse.result[0].variants.length > 0){
       for(var v = 0; v < product.amazonResponse.result[0].variants.length && qtyImages < 3; v++){
+        let imageUrl = "";
         try{
           const variant = product.amazonResponse.result[0].variants[v];
           if (variant.images && variant.images.length > 0){
-            await downloadAndSave(variant.images[0].large, `${i}-variant-${qtyImages}-original.png`);
+            imageUrl = variant.images[0];
+            if (imageUrl.large) imageUrl = imageUrl.large;
+            await downloadAndSave(imageUrl, `${i}-variant-${qtyImages}-original.png`);
             product.templateStructure.images.push(`${i}-variant-${qtyImages}-original.png`);
             qtyImages++;
           }

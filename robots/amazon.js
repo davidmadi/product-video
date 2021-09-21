@@ -21,10 +21,10 @@ async function loadProductsFromAmazon(content){
 
 async function loadProductFromAPI(product){
   return new Promise((resolve,reject)=>{    
-    product.storeUrl = `https://www.amazon.com/dp/${product.id}`;
+    product.storeUrl = `https://www.amazon.ca/dp/${product.id}`;
     var config = {
       method: 'get',
-      url: `https://amazon23.p.rapidapi.com/product-details?asin=${product.id}&country=US`,
+      url: `https://amazon23.p.rapidapi.com/product-details?asin=${product.id}&country=CA`,
       headers: {
         'X-RapidAPI-Key': rapidapiAmazon['x-rapidapi-key'],
         'X-RapidAPI-Host': rapidapiAmazon['x-rapidapi-host'],
@@ -34,7 +34,7 @@ async function loadProductFromAPI(product){
     axios(config)
     .then(function (response) {
       product.amazonResponse = response.data;
-      console.log(response.data);
+      //console.log(response.data);
       resolve(response.data);
     })
     .catch(function (error) {

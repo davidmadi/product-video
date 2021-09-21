@@ -25,14 +25,10 @@ async function robot(){
 
   const content = robots.state.load();
   //await fetchKeywordOfAllProducts(content);
-  setVideoParams(content);
   setProductName(content);
+  setVideoParams(content);
   const unionKeywords = getSameKeyWords(content);
   setImportantFeatures(unionKeywords, content);
-  //list same keywords of all products
-  //list feature bullets that contains merged keywords
-  //set important features in template structure
-  //image robot, create features image
 
   robots.state.save(content);
 
@@ -104,8 +100,7 @@ async function robot(){
     }
     content.videoTags = cuttags;
     content.videoDescription = content.products.map((p)=> 
-      p.templateStructure.name + "\n" + p.templateStructure.storeUrl ).join("\n\n");
-    var breakLine = "";
+      p.templateStructure.name + "\n" + p.storeUrl ).join("\n\n");
     for(var product of content.products){
       const eightFirst = product.templateStructure.featureKeywords.slice(0, 8);
       for(var keyword of eightFirst){
