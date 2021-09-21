@@ -13,16 +13,16 @@ const robots = {
 
 async function start(){
   const content = robots.state.load();
-  //robots.input();
-  //await robots.amazon();
-  //await robots.text()
-  //await robots.googleOAuth();
-  //await robots.speech();
+  robots.input();
+  await robots.amazon();
+  await robots.text()
+  await robots.googleOAuth();
+  await robots.speech();
   //process.exit();
-  //await robots.images()
-  //robots.state.saveScript(content);
+  await robots.images()
+  robots.state.saveScript(content);
   await robots.video();
-  //await robots.youtube();
+  await robots.youtube();
   console.log("> End");
   process.exit();
 }

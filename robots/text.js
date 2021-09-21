@@ -93,18 +93,27 @@ async function robot(){
 
   function setVideoParams(content){
     content.videoTitle = `${content.searchTerm} on Amazon`
-    content.videoTags = content.searchTerm.split(' ');
+    let videoTags = content.searchTerm.split(' ');
+    let cuttags = [];
+    let totalLength = 0;
+    for(var tag of videoTags) {
+      if (totalLength + tag.length < 500){
+        cuttags.push(tag);
+        totalLength += tag.length + 1;
+      }
+    }
+    content.videoTags = cuttags;
     content.videoDescription = content.products.map((p)=> 
       p.templateStructure.name + "\n" + p.templateStructure.storeUrl ).join("\n\n");
     var breakLine = "";
-    var tagCount = 0;
     for(var product of content.products){
       const eightFirst = product.templateStructure.featureKeywords.slice(0, 8);
       for(var keyword of eightFirst){
-        for(var splitted of keyword.split(' ')){
-          tagCount += splitted.length;
-          if (tagCount > 500) break;
-          content.videoTags.push(splitted);
+        for(var tag of keyword.split(' ')){
+          if (totalLength + tag.length < 500){
+            content.videoTags.push(tag);
+            totalLength += tag.length + 1;
+          }
         }
       }
     }

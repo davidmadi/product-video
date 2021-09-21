@@ -1,10 +1,10 @@
-const gm = require('gm').subClass({imageMagick:true});
+const gm = require('gm').subClass({ imageMagick: true });
 const spawn = require('child_process').spawn;
 const path = require('path');
-const rootPath = path.resolve(__dirname, '..'); 
+const rootPath = path.resolve(__dirname, '..');
 const state = require("./state.js");
 
-async function robot(){
+async function robot() {
   console.log('> [video render] Starting...')
   const content = state.load();
   await createYoutubeThumbnail();
@@ -13,15 +13,15 @@ async function robot(){
 }
 
 
-async function createYoutubeThumbnail(){
-  return new Promise((resolve,reject)=>{
+async function createYoutubeThumbnail() {
+  return new Promise((resolve, reject) => {
     gm()
-    .in('./content/0-converted.png')
-    .write('./content/youtube-thumbnail.png', (error)=>{
-      if (error) return reject(error);
-      console.log(`> Creating youtube thumbnail`);
-      resolve();
-    });
+      .in('./content/0-converted.png')
+      .write('./content/youtube-thumbnail.png', (error) => {
+        if (error) return reject(error);
+        console.log(`> Creating youtube thumbnail`);
+        resolve();
+      });
   });
 }
 
